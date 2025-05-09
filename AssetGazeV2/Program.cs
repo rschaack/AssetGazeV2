@@ -1,16 +1,14 @@
-﻿
-using Microsoft.Extensions.DependencyInjection;
+﻿using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 
 namespace AssetGazeV2;
 
-class Program
+internal class Program
 {
-
-    
-    static void Main(string[] args)
+    private static async Task Main(string[] args)
     {
         var godService = new GodService(false);
-        bool running = true;
+        var running = true;
 
         while (running)
         {
@@ -20,12 +18,14 @@ class Program
             Console.Write("Enter your choice: \n");
 
 
-            string choice = Console.ReadLine();
+            var choice = Console.ReadLine();
 
             switch (choice)
             {
                 case "1":
-                    godService.HandleOptionOne();
+                    Console.WriteLine("Please enter the code you want to get a price for. (e.g. USSC)");
+                    var fetchCode = Console.ReadLine();
+                    await godService.HandleOptionOne(fetchCode);
                     break;
                 case "q": // Allow 'q' or 'Q' as an alternative exit
                 case "Q":
@@ -37,11 +37,8 @@ class Program
                     break;
             }
         }
-
         Console.WriteLine("Application closed.");
     }
-
-  
 }
 
 public class GodService
@@ -50,11 +47,57 @@ public class GodService
     {
     }
 
-    public void HandleOptionOne()
+    public async Task HandleOptionOne(string? fetchCode)
     {
-        Console.WriteLine("Do some stuff.");
-        Console.WriteLine("Done some stuff.");
+        Console.WriteLine("Fetching Price.");
+        var price = new Price();
+        var priceVal = await price.Fetch(fetchCode);
+        Console.WriteLine($"The price for {fetchCode} is {priceVal}.");
     }
+}
+
+public class Price()
+{
+    public async Task<decimal> Fetch(string? fetchCode)
+    {
+        var httpClient = new HttpClient();
+        var price = 0m;
+        try
+        {
+            var ticker = fetchCode;
+            var url = $"https://api.londonstockexchange.com/api/gw/lse/instruments/alldata/{ticker}";
+            var query = new Dictionary<string, string?>
+            {
+                { "region", "US" },
+                { "lang", "en" },
+                { "symbols", ticker }
+            };
+
+// Build URL with query parameters
+            var fullUrl = url + "?" + string.Join("&", query.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+
+// Make API call
+            var response = await httpClient.GetFromJsonAsync<LseApiResponse>(fullUrl);
+            if(response != null)
+                price = response.Bid ?? 0m;
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine(ex.Message, "Mesage Error");
+        }
+        return price;
+    }
+}
+
+public class LseApiResponse
+{
+    public LseApiResponse(decimal? bid)
+    {
+        Bid = bid;
+    }
+
+    [JsonPropertyName("bid")]
+    public decimal? Bid { get; }
 }
 
 
