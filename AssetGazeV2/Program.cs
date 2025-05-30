@@ -131,7 +131,7 @@ public class LseService()
         }
         catch (HttpRequestException ex)
         {
-            Console.WriteLine(ex.Message, "Mesage Error");
+            Console.WriteLine(ex.Message, "Message Error");
         }
         return price;
     }
@@ -143,7 +143,10 @@ public class FtScraper()
     public async Task<decimal> FetchPrice(IPubliclyTradeable asset)
     {
         var httpClient = new HttpClient();
-        string fullUrl = BuildUrl(asset);
+        string baseUrl = "https://markets.ft.com/data/";
+        string category = asset.FtLinkType;
+        string priceSourceCode = $"s={asset.PriceSourceCode}"; // Assuming prices are in GBP
+        string fullUrl = $"{baseUrl}{category}/tearsheet/summary?{priceSourceCode}";
         var price = 0m;
         try
         {
@@ -181,15 +184,6 @@ public class FtScraper()
         }
         return price;
     }
-    
-    public string BuildUrl(IPubliclyTradeable asset)
-    {
-        string baseUrl = "https://markets.ft.com/data/";
-        string category = asset.FtLinkType();
-        string priceSourceCode = $"s={asset.PriceSourceCode}"; // Assuming prices are in GBP
-        string fullUrl = $"{baseUrl}{category}/tearsheet/summary?{priceSourceCode}";
-        return fullUrl;
-    }
 }
 
 
@@ -217,7 +211,7 @@ public interface IPubliclyTradeable
     string? IncomeTreatment { get; set; }
     decimal? TotalExpenseRatio { get; set; }
     string? Denomination { get; set; }
-    public string FtLinkType();
+    string FtLinkType { get; }
 }
 
 public abstract class BaseAsset : IPubliclyTradeable
@@ -230,64 +224,53 @@ public abstract class BaseAsset : IPubliclyTradeable
     public string? IncomeTreatment { get; set; }
     public decimal? TotalExpenseRatio { get; set; }
     public string? Denomination { get; set; }
+    public abstract string FtLinkType { get; }
     
     public BaseAsset(string isin, string priceSource, string priceSourceCode)
     {
+        if (string.IsNullOrWhiteSpace(isin))
+            throw new ArgumentException("ISIN cannot be null or whitespace.", nameof(isin));
+        if (string.IsNullOrWhiteSpace(priceSource))
+            throw new ArgumentException("PriceSource cannot be null or whitespace.", nameof(priceSource));
+        if (string.IsNullOrWhiteSpace(priceSourceCode))
+            throw new ArgumentException("PriceSourceCode cannot be null or whitespace.", nameof(priceSourceCode));
+        
         ISIN = isin;
         PriceSource = priceSource;
         PriceSourceCode = priceSourceCode;
     }
-
-    public abstract string FtLinkType();
 }
 
 public class Bond : BaseAsset
 {
-    public Bond(string isin, string priceSource, string priceSourceCode) : base(isin, priceSource, priceSourceCode)
-    {
-    }
+    public override string FtLinkType { get; } = "bond";
     
-    public override string FtLinkType()
-    {
-        return "bond";
-    }
+    public Bond(string isin, string priceSource, string priceSourceCode) : base(isin, priceSource, priceSourceCode) { }
 }
 
 public class Etf : BaseAsset
 {
-    public Etf(string isin, string priceSource, string priceSourceCode) : base(isin, priceSource, priceSourceCode)
-    {
-    }
-
-    public override string FtLinkType()
-    {
-        return "etf";
-    }
+    public override string FtLinkType { get; } = "etf";
+    
+    public Etf(string isin, string priceSource, string priceSourceCode) : base(isin, priceSource, priceSourceCode) { }
 }
 
 public class Equity : BaseAsset
 {
-    public Equity(string isin, string priceSource, string priceSourceCode) : base(isin, priceSource, priceSourceCode)
-    {
-    }
-
-    public override string FtLinkType()
-    {
-        return "equities";
-    }
+    public override string FtLinkType { get; } = "equities";
+    
+    public Equity(string isin, string priceSource, string priceSourceCode) : base(isin, priceSource, priceSourceCode) { }
 }
 
 public class Fund : BaseAsset
 {
-    public Fund(string isin, string priceSource, string priceSourceCode) : base(isin, priceSource, priceSourceCode)
-    {
-    }
-
-    public override string FtLinkType()
-    {
-        return "funds";
-    }
+    public override string FtLinkType { get; } = "funds";
+    
+    public Fund(string isin, string priceSource, string priceSourceCode) : base(isin, priceSource, priceSourceCode) { }
 }
+
+
+
 
 
 
