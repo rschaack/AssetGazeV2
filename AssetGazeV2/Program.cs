@@ -41,7 +41,7 @@ internal class Program
                     Console.WriteLine("s for Equities.");
                     Console.WriteLine("f for Funds.");
                     var assetTypeInput = Console.ReadLine();
-                    IPublicTradeable asset1;
+                    IPubliclyTradeable asset1;
                     switch (assetTypeInput)
                     {
                         case "b":
@@ -95,7 +95,7 @@ public class GodService
         Console.WriteLine($"The price for {fetchCode} is {priceVal}.");
     }
 
-    public async Task HandleOptionTwo(IPublicTradeable asset)
+    public async Task HandleOptionTwo(IPubliclyTradeable asset)
     {
         Console.WriteLine("Fetching FTScraper.");
         var price = new FtScraper();
@@ -140,7 +140,7 @@ public class LseService()
 
 public class FtScraper()
 {
-    public async Task<decimal> FetchPrice(IPublicTradeable asset)
+    public async Task<decimal> FetchPrice(IPubliclyTradeable asset)
     {
         var httpClient = new HttpClient();
         string fullUrl = BuildUrl(asset);
@@ -182,7 +182,7 @@ public class FtScraper()
         return price;
     }
     
-    public string BuildUrl(IPublicTradeable asset)
+    public string BuildUrl(IPubliclyTradeable asset)
     {
         string baseUrl = "https://markets.ft.com/data/";
         string category = asset.FtLinkType();
@@ -207,7 +207,7 @@ public class LseApiResponse
 
 
 
-public interface IPublicTradeable
+public interface IPubliclyTradeable
 {
     string? Name { get; set;  }
     string ISIN { get; set; }
@@ -220,7 +220,7 @@ public interface IPublicTradeable
     public string FtLinkType();
 }
 
-public abstract class BaseAsset : IPublicTradeable
+public abstract class BaseAsset : IPubliclyTradeable
 {
     public string? Name { get; set; }
     public string ISIN { get; set; }
