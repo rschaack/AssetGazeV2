@@ -20,4 +20,8 @@
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\AssetGazeV2\AssetGazeV2.csproj" />
+    </ItemGroup>
+
 </Project>
